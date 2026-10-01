@@ -9,6 +9,7 @@ export function LandingPage() {
   const roomImage = new URL('../../pictures/room1.jpg', import.meta.url).href;
   const room2Image = new URL('../../pictures/room2.jpg', import.meta.url).href; 
   const room3Image = new URL('../../pictures/room3.jpg', import.meta.url).href;
+  const watikoloVideo = new URL('../../pictures/watikolovid.mp4', import.meta.url).href;
   return (
     <div className="bg-white font-body">
       <HeroSection />
@@ -31,13 +32,8 @@ export function LandingPage() {
             </p>
           </div>
 
-          <div className="mt-10 overflow-hidden rounded-2xl border shadow-card">
-            <iframe
-              className="h-[500px] w-full"
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-              title="Watikolo Video"
-              allowFullScreen
-            />
+          <div className="mt-10 aspect-video overflow-hidden rounded-2xl border bg-black shadow-card">
+            <video className="h-full w-full object-contain" src={watikoloVideo} controls playsInline />
           </div>
         </div>
       </section>
@@ -56,15 +52,13 @@ export function LandingPage() {
 
           <div className="mt-3 space-y-3 leading-relaxed text-gray-600">
             <p>
-              Nestled in a quiet, all-natural setting in Dauis, Bohol, Watikolo Event Venue offers a peaceful and private
+              Nestled in a quiet, all-natural setting at Purok 4 Upper Puntod Road, Tabalong, Dauis, Bohol, Watikolo Event Venue offers a peaceful and private
               environment. Its serene location makes it perfect for meaningful gatherings, special milestones, and memorable
               events.
             </p>
             <p>
-              The venue is easily accessible from Tagbilaran City, Panglao Island, and other key areas in Bohol, making it a
-              convenient choice for both local and out-of-town guests. Whether you&apos;re celebrating a birthday, wedding,
-              corporate event, or family reunion, Watikolo provides a tranquil escape where you can create unforgettable
-              memories with your loved ones.
+              The venue is easy to reach for both local and out-of-town guests, making it a covenient choice for birthdays, weddings, corporate events, or
+              family reunion, Watikolo provides a tranquil escape where you can create unforgettable memories with your loved ones.
             </p>
           </div>
         </div>
@@ -72,36 +66,30 @@ export function LandingPage() {
 
       <section id="things-to-do" className="py-6">
         <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-display text-2xl font-semibold text-[#1f1f1f]">Services and Facilities</h2>
+          <h2 className="font-display text-2xl font-semibold text-[#1f1f1f]">Things To Do</h2>
 
           <p className="mt-3 text-gray-600">
-            At Watikolo Event Venue Rental, we offer a complete and comfortable setting designed to make every celebration
-            seamless, enjoyable, and unforgettable.
+            Choose the activity you need, then check the available booking options.
           </p>
 
           <div className="mt-5 grid gap-6 md:grid-cols-2">
             <div>
-              <h3 className="mb-2 font-semibold text-[#1f1f1f]">Venue Facilities</h3>
+              <h3 className="mb-2 font-semibold text-[#1f1f1f]">For Events</h3>
 
               <ul className="space-y-2 text-gray-600">
-                <li>- Expansive 6,000+ sqm property</li>
-                <li>- Exclusive private venue use</li>
-                <li>- Swimming pool area</li>
-                <li>- Fully furnished bedrooms</li>
-                <li>- Indoor parking</li>
-                <li>- Kitchen and grill area</li>
-                <li>- Billiard table</li>
+                <li>- Book a birthday, wedding, reunion, or private event</li>
+                <li>- Choose a package based on guest count</li>
+                <li>- Check available dates and time slots</li>
               </ul>
             </div>
 
             <div>
-              <h3 className="mb-2 font-semibold text-[#1f1f1f]">Event Services</h3>
+              <h3 className="mb-2 font-semibold text-[#1f1f1f]">For Stay and Pool Use</h3>
 
               <ul className="space-y-2 text-gray-600">
-                <li>- Flexible venue layout</li>
-                <li>- On-site staff assistance</li>
-                <li>- Open event spaces</li>
-                <li>- Perfect for different event celebrations</li>
+                <li>- Reserve rooms for overnight stays</li>
+                <li>- Use the swimming pool for day or night use</li>
+                <li>- Add rooms or pool access to your event plans</li>
               </ul>
             </div>
           </div>
@@ -165,48 +153,39 @@ export function LandingPage() {
 
           <p className="mt-2 text-gray-600">Spacious. Private. Perfect for Every Occasion.</p>
 
-          <div className="mt-6 grid items-stretch gap-6 md:grid-cols-3">
-            <div className="flex h-full flex-col overflow-hidden rounded-xl shadow-md">
+          <div className="mt-6 grid gap-6 md:grid-cols-3">
+            <div className="overflow-hidden rounded-xl shadow-md">
               <img src={featureImage} alt="Essential package" className="h-52 w-full object-cover" />
 
-              <div className="flex flex-1 bg-[#0f4da0] p-4">
-                <div className="w-full bg-[#dbe3ee] p-4 text-sm text-gray-800">
-                  <p className="mb-2 font-semibold">ESSENTIAL PACKAGE - PHP 5,000.00</p>
-
-                  <ul className="space-y-1">
-                    <li>- Maximum of 30 PAX</li>
-                    <li>- 8 Hours Venue Day Use</li>
-                    <li>- 5 Hours Venue Night Use</li>
-                    <li>- Pool Access</li>
-                    <li>- Billiard Table</li>
-                  </ul>
+              <div className="bg-[#0f4da0] pt-2">
+                <div className="bg-[#dbe3ee] px-3 py-4 text-center text-sm text-gray-800">
+                  <p className="font-semibold">ESSENTIAL PACKAGE</p>
+                  <p className="mt-1 text-xs">price from</p>
+                  <p className="font-semibold">PHP 5,000.00</p>
+                  <p className="text-xs">maximum of 30 PAX</p>
                 </div>
+                <div className="h-2 bg-[#0f4da0]" />
               </div>
             </div>
 
-            <div className="flex h-full flex-col overflow-hidden rounded-xl shadow-md">
+            <div className="overflow-hidden rounded-xl shadow-md">
               <img src={servicesImage} alt="Classic package" className="h-52 w-full object-cover" />
 
-              <div className="flex flex-1 bg-[#0f4da0] p-4">
-                <div className="w-full bg-[#dbe3ee] p-4 text-sm text-gray-800">
-                  <p className="mb-2 font-semibold">CLASSIC PACKAGE - PHP 10,000.00</p>
-
-                  <ul className="space-y-1">
-                    <li>- Maximum of 120 PAX</li>
-                    <li>- 8 Hours Venue Day Use</li>
-                    <li>- 5 Hours Venue Night Use</li>
-                    <li>- Pool Access</li>
-                    <li>- Billiard Table</li>
-                    <li>- Free Use of Videoke</li>
-                  </ul>
+              <div className="bg-[#0f4da0] pt-2">
+                <div className="bg-[#dbe3ee] px-3 py-4 text-center text-sm text-gray-800">
+                  <p className="font-semibold">CLASSIC PACKAGE</p>
+                  <p className="mt-1 text-xs">price from</p>
+                  <p className="font-semibold">PHP 10,000.00</p>
+                  <p className="text-xs">maximum of 30 PAX</p>
                 </div>
+                <div className="h-2 bg-[#0f4da0]" />
               </div>
             </div>
 
-            <Link to="/venues" className="group flex h-full flex-col overflow-hidden rounded-xl shadow-md">
+            <Link to="/venues" className="group overflow-hidden rounded-xl shadow-md">
               <img src={accommodationImage} alt="More venue packages" className="h-52 w-full object-cover" />
 
-              <div className="flex flex-1 items-center justify-center bg-[#0f4da0]">
+              <div className="flex h-[120px] items-center justify-center bg-[#0f4da0]">
                 <span className="bg-[#dbe3ee] px-6 py-2 text-sm font-semibold text-gray-800 transition group-hover:bg-white">
                   MORE PACKAGES
                 </span>
@@ -264,103 +243,91 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section id="guest-reviews" className="bg-white py-10">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="font-display text-2xl font-semibold text-[#1f1f1f]">Guest Review </h2>
+      <section id="guest-reviews" className="bg-white py-8">
+        <div className="mx-auto max-w-[1180px] px-4">
+          <h2 className="font-display text-2xl font-semibold text-[#1f1f1f]">Guest Review</h2>
 
-          <div className="mt-8 grid gap-8 md:grid-cols-3">
+          <div className="mt-9 grid gap-12 md:grid-cols-3">
             <div>
               <div className="flex items-center gap-3">
                 <img src="https://i.pravatar.cc/40?img=1" alt="Lyds Rod" className="h-10 w-10 rounded-full object-cover" />
-                <p className="font-semibold text-[#1f1f1f]">Lyds Rod</p>
+                <p className="text-[15px] font-semibold text-[#1f1f1f]">Lyds Rod</p>
               </div>
 
-              <div className="mt-2 text-sm text-yellow-400">5/5</div>
+              <div className="mt-4 text-[13px] tracking-[0.16em] text-yellow-300">*****</div>
 
-              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+              <p className="mt-4 text-sm leading-7 text-gray-600">
                 We found Watikolo through our research online. Frankly, I was cautiously optimistic, but everything exceeded
                 expectations. The place is truly amazing and peaceful...
               </p>
 
-              <button className="mt-2 text-sm text-gray-400 hover:text-gray-600">Read more</button>
+              <button className="mt-3 text-[13px] text-gray-300 hover:text-gray-500">Read more</button>
             </div>
 
             <div>
               <div className="flex items-center gap-3">
                 <img src="https://i.pravatar.cc/40?img=2" alt="Neil Pickford" className="h-10 w-10 rounded-full object-cover" />
-                <p className="font-semibold text-[#1f1f1f]">Neil Pickford</p>
+                <p className="text-[15px] font-semibold text-[#1f1f1f]">Neil Pickford</p>
               </div>
 
-              <div className="mt-2 text-sm text-yellow-400">5/5</div>
+              <div className="mt-4 text-[13px] tracking-[0.16em] text-yellow-300">*****</div>
 
-              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+              <p className="mt-4 text-sm leading-7 text-gray-600">
                 Stayed here with a group and the place is tucked away nicely but still accessible. The villa is new, clean,
                 and perfect for big groups...
               </p>
 
-              <button className="mt-2 text-sm text-gray-400 hover:text-gray-600">Read more</button>
+              <button className="mt-3 text-[13px] text-gray-300 hover:text-gray-500">Read more</button>
             </div>
 
             <div>
               <div className="flex items-center gap-3">
                 <img src="https://i.pravatar.cc/40?img=3" alt="Jeselle Maris Buenafe" className="h-10 w-10 rounded-full object-cover" />
-                <p className="font-semibold text-[#1f1f1f]">Jeselle Maris Buenafe</p>
+                <p className="text-[15px] font-semibold text-[#1f1f1f]">Jeselle Maris Buenafe</p>
               </div>
 
-              <div className="mt-2 text-sm text-yellow-400">5/5</div>
+              <div className="mt-4 text-[13px] tracking-[0.16em] text-yellow-300">*****</div>
 
-              <p className="mt-2 text-sm leading-relaxed text-gray-600">
+              <p className="mt-4 text-sm leading-7 text-gray-600">
                 100/10! Everything about this place is superb. Booking was easy and the team is very responsive and
                 accommodating...
               </p>
 
-              <button className="mt-2 text-sm text-gray-400 hover:text-gray-600">Read more</button>
+              <button className="mt-3 text-[13px] text-gray-300 hover:text-gray-500">Read more</button>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="contact" className="mt-10">
-        <div className="bg-[#2d2d2d] py-4 text-white">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-2 px-6 text-sm">
-            <span>Purok 4, Upper Puntod Road, Tabalong, Dauis, Bohol, Philippines</span>
+      <section id="contact">
+        <div className="bg-[#2b2b2b] py-4 text-white">
+          <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-2 px-4 text-[13px] font-medium">
+            <span>P4 Upper Puntod Road Tabalong, Dauis, Philippines</span>
             <a href="tel:+639158748529" className="text-blue-400 hover:underline">
               +63 915 874 8529
             </a>
           </div>
         </div>
 
-        <div className="relative h-[260px] overflow-hidden bg-gray-300">
+        <div className="relative h-[230px] overflow-hidden bg-[#d2d6de]">
           <div className="absolute inset-0 bg-[url('https://maps.googleapis.com/maps/api/staticmap?center=Bohol&zoom=12&size=800x400')] bg-cover bg-center opacity-60 blur-sm" />
 
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
             <a
-              href="https://maps.google.com"
+              href="https://maps.app.goo.gl/ZQLSrCn1nNPaKFSW9"
               target="_blank"
               rel="noreferrer"
-              className="rounded-md bg-white px-5 py-2 font-medium text-blue-600 shadow transition hover:bg-gray-100"
+              className="rounded bg-white px-5 py-2 text-[13px] font-semibold text-[#3574bf] shadow transition hover:bg-gray-100"
             >
               Explore our location
             </a>
 
-            <p className="mt-3 text-sm text-white opacity-80">
+            <p className="mt-4 text-[13px] text-white opacity-75">
               Google Maps is hidden to reduce page load time. Click to view.
             </p>
           </div>
         </div>
 
-        <div className="bg-[#2d2d2d] py-4 text-white">
-          <div className="mx-auto flex max-w-6xl flex-wrap justify-between gap-3 px-6 text-sm">
-            <div className="flex gap-6">
-              <a href="#" className="hover:underline">
-                Terms and Conditions
-              </a>
-              <a href="#" className="hover:underline">
-                Privacy Policy
-              </a>
-            </div>
-          </div>
-        </div>
       </section>
     </div>
   );

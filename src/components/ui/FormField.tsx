@@ -9,7 +9,7 @@ interface FieldBaseProps {
 type InputProps = FieldBaseProps & InputHTMLAttributes<HTMLInputElement>;
 type SelectProps = FieldBaseProps &
   SelectHTMLAttributes<HTMLSelectElement> & {
-    options: Array<{ label: string; value: string }>;
+    options: Array<{ label: string; value: string; disabled?: boolean }>;
   };
 type TextAreaProps = FieldBaseProps & TextareaHTMLAttributes<HTMLTextAreaElement>;
 
@@ -41,7 +41,7 @@ export function SelectField({ label, hint, options, className, ...props }: Selec
         {...props}
       >
         {options.map((option) => (
-          <option key={option.value} value={option.value}>
+          <option key={option.value} value={option.value} disabled={option.disabled}>
             {option.label}
           </option>
         ))}

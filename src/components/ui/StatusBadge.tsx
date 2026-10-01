@@ -10,6 +10,7 @@ export function StatusBadge({ status }: StatusBadgeProps) {
     available: 'bg-emerald-50 text-emerald-700',
     reserved: 'bg-amber-50 text-amber-700',
     booked: 'bg-rose-50 text-rose-700',
+    'partial payment': 'bg-amber-50 text-amber-700',
     pending: 'bg-amber-50 text-amber-700',
     approved: 'bg-sky-50 text-sky-700',
     completed: 'bg-emerald-50 text-emerald-700',

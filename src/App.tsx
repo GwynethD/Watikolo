@@ -1,10 +1,13 @@
 import { AppRouter } from '@/routes/AppRouter';
 import { AppDataProvider } from '@/context/AppDataContext';
+import { AdminAuthProvider } from '@/context/AdminAuthContext';
 
 function App() {
   return (
     <AppDataProvider>
-      <AppRouter />
+      <AdminAuthProvider>
+        <AppRouter />
+      </AdminAuthProvider>
     </AppDataProvider>
   );
 }

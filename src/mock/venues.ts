@@ -119,6 +119,26 @@ export const venues: Venue[] = [
     availabilityText: 'Weekend slots filling up',
     availability: 'Limited availability',
   },
+  {
+    id: 'venue-6',
+    name: 'Poolside Garden',
+    slug: 'poolside-garden',
+    type: 'Garden',
+    location: 'Purok 4 Upper Puntod Road, Tabalong, Dauis, Bohol',
+    price: 45000,
+    capacity: 160,
+    rating: 4.8,
+    shortDescription: 'A relaxed poolside garden venue for birthdays, family gatherings, and intimate celebrations.',
+    description:
+      'Poolside Garden gives guests a bright outdoor setting beside the pool, with flexible table layouts and easy access to the main house amenities.',
+    amenities: ['Poolside setup', 'Garden tables', 'Parking area', 'Photo spots', 'Outdoor lounge'],
+    eventTypes: ['Birthday', 'Debut', 'Wedding', 'Other'],
+    heroImage: longPoolImage,
+    gallery: [poolImage, gardenImage, exteriorTwoImage],
+    featured: true,
+    availabilityText: 'Available for daytime use',
+    availability: 'Open this week',
+  },
 ];
 
 export const testimonials: Testimonial[] = [

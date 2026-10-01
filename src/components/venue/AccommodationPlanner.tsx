@@ -1,367 +1,165 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, MapPin, Star, Users } from 'lucide-react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Check } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAppData } from '@/context/AppDataContext';
-import { formatCurrency } from '@/utils/format';
+import { formatCapacityLabel, formatCurrency, formatRoomCapacityLabel } from '@/utils/format';
+import { Button } from '@/components/ui/Button';
+import { addDays, toDateKey } from '@/utils/date';
+import { unavailableRooms } from '@/utils/roomAvailability';
 
 interface AccommodationPlannerProps {
   venueId?: string;
+  activeView?: 'rates' | 'rooms';
 }
 
-const packages = [
-  {
-    name: 'Essential',
-    price: 5000,
-    minGuests: 30,
-    inclusions: ['Pool access', 'Tables and chairs', 'Basic styling support'],
-  },
-  {
-    name: 'Classic',
-    price: 10000,
-    minGuests: 50,
-    inclusions: ['Function area', 'Guest tables', 'Photo-ready backdrop'],
-  },
-  {
-    name: 'Premium',
-    price: 15000,
-    minGuests: 70,
-    inclusions: ['Sound system', 'Upgraded styling', 'Expanded guest setup'],
-  },
-  {
-    name: 'Deluxe',
-    price: 20000,
-    minGuests: 90,
-    inclusions: ['Full venue access', '2 room inclusions', 'Event support'],
-  },
-  {
-    name: 'Grand',
-    price: 25000,
-    minGuests: 120,
-    inclusions: ['Decor setup', 'Extended venue use', '2 room inclusions'],
-  },
-  {
-    name: 'Ultimate',
-    price: 30000,
-    minGuests: 150,
-    inclusions: ['All access package', 'VIP styling', 'Priority support'],
-  },
-] as const;
+const packageImage = new URL('../../pictures/function.png', import.meta.url).href;
 
-const rooms = [
-  {
-    name: 'Watikolo Luxe Stay',
-    image: new URL('../../pictures/room1.jpg', import.meta.url).href,
-    capacity: 'Good for 2 persons',
-    price: 1900,
-    inclusions: ['Air conditioning', 'Private bathroom', 'Smart TV'],
-  },
-  {
-    name: 'Watikolo Grand Room',
-    image: new URL('../../pictures/room2.jpg', import.meta.url).href,
-    capacity: 'Good for 3-4 persons',
-    price: 2499,
-    inclusions: ['Air conditioning', 'WiFi', 'Cozy bed'],
-  },
-  {
-    name: 'Watikolo Family Room',
-    image: new URL('../../pictures/room3.jpg', import.meta.url).href,
-    capacity: 'Good for 4-6 persons',
-    price: 3499,
-    inclusions: ['Air conditioning', 'Private CR', 'Mini lounge'],
-  },
-] as const;
-
-const timeSlots = ['Morning', 'Afternoon', 'Evening'] as const;
-
-const serviceAddOns = [
-  { name: 'Decor Styling', price: 2500, description: 'Themed setup for the event area.' },
-  { name: 'Sound System Upgrade', price: 1800, description: 'Enhanced speakers and audio support.' },
-  { name: 'Projector & Screen', price: 1500, description: 'Good for AVP and presentations.' },
-  { name: 'Welcome Drinks', price: 1200, description: 'Prepared refreshments for arriving guests.' },
-] as const;
-
-const roomAddOns = rooms.map((room) => ({
-  name: `${room.name} Add-On`,
-  price: room.price,
-  description: room.capacity,
-  image: room.image,
-  type: 'room' as const,
-}));
-
-const allAddOns = [
-  ...serviceAddOns.map((item) => ({ ...item, type: 'service' as const })),
-  ...roomAddOns,
-];
-
-const roomAddOnNames = roomAddOns.map((item) => item.name);
-
-export function AccommodationPlanner({ venueId }: AccommodationPlannerProps) {
+export function AccommodationPlanner({ venueId, activeView = 'rates' }: AccommodationPlannerProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { venues } = useAppData();
-  const venue = useMemo(() => venues.find((item) => item.id === venueId) ?? venues[0], [venueId, venues]);
-  const initialPackageIndex = Math.min(Math.max(Number(searchParams.get('package') ?? 0) || 0, 0), packages.length - 1);
+  const { venues, packages, rooms, bookings } = useAppData();
+  const accommodationVenues = useMemo(() => venues.slice(0, 3), [venues]);
+  const requestedVenueId = venueId ?? searchParams.get('venueId') ?? '';
+  const fallbackVenueId = accommodationVenues.some((item) => item.id === requestedVenueId)
+    ? requestedVenueId
+    : accommodationVenues[0]?.id ?? '';
+  const initialPackageIndex = Math.min(Math.max(Number(searchParams.get('package') ?? 0) || 0, 0), Math.max(packages.length - 1, 0));
 
-  const [activeTab, setActiveTab] = useState<'rates' | 'rooms'>('rates');
   const [selectedPackage, setSelectedPackage] = useState(initialPackageIndex);
-  const [selectedTime, setSelectedTime] = useState<string | null>(timeSlots[0]);
-  const [guestCount, setGuestCount] = useState<number>(packages[initialPackageIndex].minGuests);
-  const [selectedAddOns, setSelectedAddOns] = useState<string[]>([]);
-
-  useEffect(() => {
-    const packageIndex = Math.min(Math.max(Number(searchParams.get('package') ?? 0) || 0, 0), packages.length - 1);
-    setSelectedPackage(packageIndex);
-  }, [searchParams]);
-
-  const pkg = packages[selectedPackage];
-  const canAddRooms = selectedPackage <= 2;
-  const availableAddOns = canAddRooms
-    ? [...serviceAddOns.map((item) => ({ ...item, type: 'service' as const })), ...roomAddOns]
-    : serviceAddOns.map((item) => ({ ...item, type: 'service' as const }));
-
-  useEffect(() => {
-    if (!canAddRooms) {
-      setSelectedAddOns((current) => current.filter((item) => !roomAddOnNames.includes(item)));
-    }
-  }, [canAddRooms]);
-
-  const selectedAddOnDetails = allAddOns.filter((item) => selectedAddOns.includes(item.name));
-  const extraGuests = guestCount > pkg.minGuests ? (guestCount - pkg.minGuests) * 100 : 0;
-  const addOnsTotal = selectedAddOnDetails.reduce((sum, item) => sum + item.price, 0);
-  const total = pkg.price + extraGuests + addOnsTotal;
-  const detailPath = `/venues/${venue.id}`;
-
-  const toggleAddOn = (name: string) => {
-    setSelectedAddOns((current) =>
-      current.includes(name) ? current.filter((item) => item !== name) : [...current, name],
-    );
+  const [selectedVenueId, setSelectedVenueId] = useState(fallbackVenueId);
+  const [guestCount, setGuestCount] = useState<number>(packages[initialPackageIndex]?.minGuests ?? 1);
+  const [openInclusions, setOpenInclusions] = useState<number | null>(null);
+  const [selectedRoomNames, setSelectedRoomNames] = useState<string[]>([]);
+  const [checkIn, setCheckIn] = useState(toDateKey(new Date()));
+  const [checkOut, setCheckOut] = useState(toDateKey(addDays(new Date(), 1)));
+  const unavailable = useMemo(() => unavailableRooms(bookings, rooms.map((item) => item.name), checkIn, checkOut), [bookings, rooms, checkIn, checkOut]);
+  const selectedRooms = rooms.filter((item) => selectedRoomNames.includes(item.name));
+  const nightlyTotal = selectedRooms.reduce((sum, item) => sum + item.price, 0);
+  const nights = Math.max(1, Math.round((Date.parse(checkOut) - Date.parse(checkIn)) / 86400000));
+  const canBookRooms = selectedRooms.length > 0 && checkOut > checkIn && checkIn >= toDateKey(new Date()) && !selectedRooms.some((item) => unavailable.has(item.name));
+  const toggleRoom = (name: string) => {
+    if (unavailable.has(name)) return;
+    setSelectedRoomNames((current) => current.includes(name) ? current.filter((item) => item !== name) : [...current, name]);
   };
 
+  useEffect(() => {
+    if ((!selectedVenueId || !accommodationVenues.some((item) => item.id === selectedVenueId)) && fallbackVenueId) {
+      setSelectedVenueId(fallbackVenueId);
+    }
+  }, [accommodationVenues, fallbackVenueId, selectedVenueId]);
+
+  useEffect(() => {
+    const packageIndex = Math.min(Math.max(Number(searchParams.get('package') ?? 0) || 0, 0), Math.max(packages.length - 1, 0));
+    setSelectedPackage(packageIndex);
+    setGuestCount(packages[packageIndex]?.minGuests ?? 1);
+  }, [packages, searchParams]);
+
+  useEffect(() => {
+    setSelectedRoomNames((current) => current.filter((name) => rooms.some((item) => item.name === name) && !unavailable.has(name)));
+  }, [rooms, unavailable]);
+
+  const venue = useMemo(
+    () => accommodationVenues.find((item) => item.id === selectedVenueId) ?? accommodationVenues[0],
+    [accommodationVenues, selectedVenueId],
+  );
+  const pkg = packages[selectedPackage] ?? packages[0];
+  const total = pkg?.price ?? 0;
+  const room = selectedRooms[0];
+
   return (
-    <section className="mx-auto max-w-6xl px-6 py-16">
-      <div className="border-b bg-[#f5f5f5]">
-        <div className="px-0 py-8">
-          <h1 className="font-display text-2xl font-semibold text-[#1f1f1f]">ACCOMMODATIONS</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-            {venue.name} offers private resort packages, guest rooms, and a guided reservation flow you can review before booking.
-          </p>
+    <section id="rates" className="mx-auto max-w-6xl px-6 py-6">
+      {activeView === 'rates' ? (
+        <div className="grid items-start gap-7 lg:grid-cols-[2fr_0.95fr]">
+          <div className="bg-white">
+            <img src={packageImage} alt="Watikolo event package setup" className="h-[190px] w-full rounded-xl object-cover shadow-card" />
 
-          <div className="mt-6 flex flex-wrap gap-4 text-sm text-slate-600">
-            <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-card">
-              <MapPin className="h-4 w-4 text-[#5fa7c9]" />
-              {venue.location}
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-card">
-              <Users className="h-4 w-4 text-[#5fa7c9]" />
-              Up to {venue.capacity} guests
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 shadow-card">
-              <Star className="h-4 w-4 fill-current text-gold-500" />
-              {venue.rating} rating
-            </span>
-          </div>
+            <div className="mt-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-[#0f4da0]">Event Packages</p>
+              <h2 className="mt-2 text-lg font-semibold text-[#202321]">Choose your ideal package</h2>
+            </div>
 
-          <div className="mt-6 flex gap-2">
-            <button
-              onClick={() => setActiveTab('rates')}
-              className={`px-4 py-2 ${activeTab === 'rates' ? 'bg-black text-white' : 'bg-gray-200'}`}
-            >
-              RATES
-            </button>
-            <button
-              onClick={() => setActiveTab('rooms')}
-              className={`px-4 py-2 ${activeTab === 'rooms' ? 'bg-black text-white' : 'bg-gray-200'}`}
-            >
-              ROOMS & VILLAS
-            </button>
-          </div>
-        </div>
-      </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {packages.length > 0 ? packages.map((item, index) => {
+              const selected = selectedPackage === index;
 
-      <div className="grid gap-8 py-6 lg:grid-cols-[2fr_1fr]">
-        <div>
-          {activeTab === 'rates' ? (
-            <div className="rounded-2xl bg-white p-8 shadow">
-              <img src={venue.heroImage} alt={venue.name} className="mb-6 h-[300px] w-full rounded-xl object-cover" />
+              return (
+                <div
+                  key={item.name}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => {
+                    setSelectedPackage(index);
+                    setGuestCount(packages[index].minGuests);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setSelectedPackage(index);
+                      setGuestCount(packages[index].minGuests);
+                    }
+                  }}
+                  className={`rounded-xl border p-3 ${selected ? 'border-[#0f4da0] bg-[#edf4ff]' : 'border-slate-200 bg-[#f8f8f8]'}`}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#0f4da0]">Package {index + 1}</p>
+                  <h3 className="mt-2 text-sm font-semibold text-[#202321]">{item.name}</h3>
+                  <p className="text-base font-bold text-[#202321]">{formatCurrency(item.price)}</p>
+                  <p className="mt-2 text-[11px] text-slate-500">{formatCapacityLabel(item.guestLabel)}</p>
 
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#0f4da0]">Event Packages</p>
-              <h2 className="mt-2 text-2xl font-semibold text-[#202321]">Choose your ideal package</h2>
-
-              <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                {packages.map((item, index) => {
-                  const selected = selectedPackage === index;
-
-                  return (
-                    <div key={item.name} className={`rounded-xl border p-4 ${selected ? 'border-[#0f4da0] bg-[#edf4ff]' : 'bg-[#f8f8f8]'}`}>
-                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#0f4da0]">Package {index + 1}</p>
-                      <h3 className="mt-2 font-semibold text-[#202321]">{item.name}</h3>
-                      <p className="mt-2 text-sm text-slate-500">Starting from</p>
-                      <p className="text-lg font-bold text-[#202321]">{formatCurrency(item.price)}</p>
-                      <p className="mt-2 text-xs text-slate-500">Good for at least {item.minGuests} guests</p>
-                      <div className="mt-4 flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPackage(index)}
-                          className="rounded-md bg-black px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-white"
-                        >
-                          Select
-                        </button>
-                        <Link
-                          to={`${detailPath}?package=${index}`}
-                          className="rounded-md border border-slate-300 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-700"
-                        >
-                          View Details
-                        </Link>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-8 rounded-2xl border border-[#ece2d0] bg-[#fcfbf8] p-5">
-                <div className="flex items-center justify-between gap-3 border-b border-[#ece2d0] pb-4">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Selected package</p>
-                    <h3 className="mt-2 text-2xl font-semibold text-[#202321]">{pkg.name}</h3>
-                  </div>
-                  <span className="rounded-full bg-black px-4 py-2 text-sm font-semibold text-white">{formatCurrency(pkg.price)}</span>
-                </div>
-
-                <div className="mt-5 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Inclusions</p>
-                    <div className="mt-3 grid gap-3">
-                      {pkg.inclusions.map((inclusion) => (
-                        <div key={inclusion} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-sm text-slate-600">
-                          <Check className="h-4 w-4 text-gold-500" />
-                          {inclusion}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Time Slot</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {timeSlots.map((slot) => (
-                        <button
-                          key={slot}
-                          type="button"
-                          onClick={() => setSelectedTime(slot)}
-                          className={`rounded-md px-4 py-2 text-sm ${selectedTime === slot ? 'bg-black text-white' : 'bg-white border border-slate-200 text-slate-700'}`}
-                        >
-                          {slot}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="mt-5">
-                      <label className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Guests</label>
-                      <input
-                        type="number"
-                        min={pkg.minGuests}
-                        value={guestCount}
-                        onChange={(event) => setGuestCount(Number(event.target.value))}
-                        className="mt-2 w-full rounded-md border border-slate-200 px-3 py-2"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-8">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Additional Add-Ons</p>
-                  <span className="text-xs text-slate-400">
-                    {canAddRooms ? 'Rooms available for this package' : 'Room add-ons only for Packages 1-3'}
-                  </span>
-                </div>
-
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  {availableAddOns.map((item) => {
-                    const selected = selectedAddOns.includes(item.name);
-
-                    return (
-                      <button
-                        key={item.name}
-                        type="button"
-                        onClick={() => toggleAddOn(item.name)}
-                        className={`overflow-hidden rounded-2xl border text-left transition ${selected ? 'border-[#0f4da0] bg-[#edf4ff]' : 'border-slate-200 bg-white hover:border-slate-300'}`}
-                      >
-                        {item.type === 'room' ? <img src={item.image} alt={item.name} className="h-28 w-full object-cover" /> : null}
-                        <div className="px-4 py-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-sm font-semibold text-[#202321]">{item.name}</p>
-                              <p className="mt-1 text-xs text-slate-500">{item.description}</p>
-                            </div>
-                            <span className={`rounded-full px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${item.type === 'room' ? 'bg-[#f8f2e5] text-[#9a6b19]' : 'bg-[#f1f5f9] text-slate-600'}`}>
-                              {item.type === 'room' ? 'Room' : 'Add-On'}
-                            </span>
+                  <div className="mt-3">
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setSelectedPackage(index);
+                        setGuestCount(packages[index].minGuests);
+                        setOpenInclusions((current) => (current === index ? null : index));
+                      }}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      className="w-full rounded-md border border-slate-300 bg-white px-2 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600 transition hover:border-[#0f4da0] hover:text-[#0f4da0]"
+                    >
+                      Inclusions
+                    </button>
+                    {openInclusions === index ? (
+                      <div className="mt-2 space-y-1.5 rounded-md border border-slate-200 bg-white px-2 py-2 text-[11px] font-medium text-[#202321] shadow-sm">
+                        {item.inclusions.map((inclusion) => (
+                          <div key={inclusion} className="flex items-center gap-2">
+                            <Check className="h-3.5 w-3.5 shrink-0 text-[#0f4da0]" />
+                            <span>{inclusion}</span>
                           </div>
-                          <p className="mt-3 text-xs font-semibold text-[#0f4da0]">{formatCurrency(item.price)}</p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {rooms.map((room) => (
-                <div key={room.name} className="flex flex-col rounded-2xl bg-white shadow md:flex-row">
-                  <img src={room.image} alt={room.name} className="object-cover md:w-[35%]" />
-
-                  <div className="flex-1 p-6">
-                    <h2 className="text-lg font-semibold text-[#202321]">{room.name}</h2>
-                    <p className="text-sm text-gray-500">{room.capacity}</p>
-                    <p className="mt-3 text-lg font-bold text-[#202321]">{formatCurrency(room.price)}</p>
-
-                    <div className="mt-4 space-y-2 text-sm text-gray-700">
-                      {room.inclusions.map((inclusion) => (
-                        <div key={inclusion}>- {inclusion}</div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex w-[220px] items-center justify-center border-l p-6">
-                    <Link to={detailPath} className="bg-black px-4 py-2 text-sm text-white">
-                      VIEW DETAILS
-                    </Link>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-              ))}
+              );
+              }) : (
+                <p className="rounded-xl border border-slate-200 bg-[#f8f8f8] p-4 text-sm text-slate-500">No packages available.</p>
+              )}
             </div>
-          )}
-        </div>
+          </div>
 
-        <aside className="sticky top-24 h-fit rounded-[1.75rem] border border-[#e9dfcc] bg-white p-6 shadow-lg shadow-slate-200/60">
+          <aside className="sticky top-24 h-fit rounded-xl border border-[#e9dfcc] bg-white p-4 shadow-lg shadow-slate-200/60">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#0f4da0]">Booking Summary</p>
-              <h2 className="mt-2 text-2xl font-semibold text-[#202321]">Your stay estimate</h2>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#0f4da0]">Booking Summary</p>
+              <h2 className="mt-1 text-base font-semibold text-[#202321]">Your stay estimate</h2>
             </div>
-            <span className="rounded-full bg-[#edf4ff] px-3 py-1 text-xs font-semibold text-[#0f4da0]">Live</span>
+            <span className="rounded-full bg-[#edf4ff] px-3 py-1 text-[10px] font-semibold text-[#0f4da0]">Live</span>
           </div>
 
-          <div className="mt-6 rounded-2xl border border-[#ece2d0] bg-[#fcfbf8] p-4">
+          <div className="mt-4 rounded-xl border border-[#ece2d0] bg-[#fcfbf8] p-3">
             <div className="flex items-center justify-between gap-3 border-b border-[#ece2d0] pb-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Venue</p>
-                <p className="mt-1 font-semibold text-[#202321]">{venue.name}</p>
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Venue</p>
+                <p className="mt-1 text-sm font-semibold text-[#202321]">{venue?.name ?? 'Watikolo'}</p>
               </div>
-              <span className="rounded-full bg-black px-3 py-1 text-xs font-semibold text-white">{formatCurrency(pkg.price)}</span>
+              <span className="rounded-full bg-black px-3 py-1 text-[10px] font-semibold text-white">{formatCurrency(pkg?.price ?? 0)}</span>
             </div>
 
-            <dl className="mt-4 space-y-3 text-sm text-slate-600">
+            <dl className="mt-3 space-y-2 text-xs text-slate-600">
               <div className="flex items-center justify-between gap-3">
                 <dt>Selected package</dt>
-                <dd className="font-medium text-[#202321]">{pkg.name}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <dt>Time slot</dt>
-                <dd className="font-medium text-[#202321]">{selectedTime ?? 'Choose a schedule'}</dd>
+                <dd className="font-medium text-[#202321]">{pkg?.name ?? 'No package'}</dd>
               </div>
               <div className="flex items-center justify-between gap-3">
                 <dt>Guest count</dt>
@@ -369,76 +167,198 @@ export function AccommodationPlanner({ venueId }: AccommodationPlannerProps) {
               </div>
               <div className="flex items-center justify-between gap-3">
                 <dt>Included guests</dt>
-                <dd className="font-medium text-[#202321]">{pkg.minGuests}</dd>
+                <dd className="font-medium text-[#202321]">{pkg?.minGuests ?? 0}</dd>
               </div>
             </dl>
           </div>
 
-          <div className="mt-6">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Package Inclusions</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {pkg.inclusions.map((inclusion) => (
-                <span key={inclusion} className="rounded-full bg-[#f3efe6] px-3 py-2 text-xs font-medium text-[#202321]">
-                  {inclusion}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-6 rounded-2xl border border-[#ece2d0] bg-[#fcfbf8] p-4">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Additional Add-Ons</p>
-              <span className="text-xs font-semibold text-[#0f4da0]">{selectedAddOns.length} selected</span>
-            </div>
-
-            {selectedAddOns.length > 0 ? (
-              <div className="mt-3 space-y-2">
-                {selectedAddOnDetails.map((item) => (
-                  <div key={item.name} className="flex items-center justify-between gap-3 text-sm text-slate-600">
-                    <div>
-                      <span>{item.name}</span>
-                      <p className="text-xs text-slate-400">{item.description}</p>
-                    </div>
-                    <span className="font-medium text-[#202321]">{formatCurrency(item.price)}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="mt-3 text-sm text-slate-400">No add-ons selected yet.</p>
-            )}
-          </div>
-
-          <div className="mt-6 rounded-2xl bg-[#f7f7f7] p-4">
-            <div className="flex items-center justify-between text-sm text-slate-600">
+          <div className="mt-4 rounded-xl bg-[#f7f7f7] p-3">
+            <div className="flex items-center justify-between text-xs text-slate-600">
               <span>Package rate</span>
-              <span className="font-medium text-[#202321]">{formatCurrency(pkg.price)}</span>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
-              <span>Extra guest fee</span>
-              <span className="font-medium text-[#202321]">{formatCurrency(extraGuests)}</span>
-            </div>
-            <div className="mt-3 flex items-center justify-between text-sm text-slate-600">
-              <span>Add-ons</span>
-              <span className="font-medium text-[#202321]">{formatCurrency(addOnsTotal)}</span>
+              <span className="font-medium text-[#202321]">{formatCurrency(pkg?.price ?? 0)}</span>
             </div>
 
             <div className="mt-4 border-t border-slate-200 pt-4">
               <div className="flex items-center justify-between">
-                <span className="text-base font-semibold text-[#202321]">Estimated total</span>
-                <span className="text-xl font-bold text-[#0f4da0]">{formatCurrency(total)}</span>
+                <span className="text-sm font-semibold text-[#202321]">Estimated total</span>
+                <span className="text-lg font-bold text-[#0f4da0]">{formatCurrency(total)}</span>
               </div>
             </div>
           </div>
 
-          <button
-            onClick={() => navigate(`/booking?venueId=${venue.id}`)}
-            className="mt-6 w-full rounded-xl bg-[#0f4da0] py-3 text-sm font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-[#0b3e82]"
-          >
-            Book Now
-          </button>
-        </aside>
-      </div>
+          <p className="mt-4 text-xs leading-5 text-slate-500">
+            Event date, event type, and final schedule are completed after you tap <strong>Book Now</strong>.
+          </p>
+
+          <div className="mt-4">
+            <Button
+              className="w-full"
+              onClick={() => {
+                const params = new URLSearchParams();
+                if (!venue || !pkg) {
+                  return;
+                }
+                params.set('venueId', venue.id);
+                params.set('source', 'accommodation-planner');
+                params.set('entrySource', 'planner');
+                params.set('bookingMode', 'package');
+                params.set('package', String(selectedPackage));
+                params.set('packageName', pkg.name);
+                params.set('packagePrice', String(pkg.price));
+                params.set('includedGuests', String(pkg.minGuests));
+                params.set('estimatedTotal', String(total));
+                navigate(`/booking?${params.toString()}`);
+              }}
+            >
+              Book Now
+            </Button>
+          </div>
+          </aside>
+        </div>
+      ) : null}
+
+      {activeView === 'rooms' ? (
+        <div id="rooms" className="grid scroll-mt-24 items-start gap-7 lg:grid-cols-[2fr_0.95fr]">
+          <div>
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.34em] text-[#0f4da0]">Rooms</p>
+              <h2 className="mt-2 text-lg font-semibold text-[#202321]">Choose one or more rooms</h2>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <label className="text-sm">Check-in<input type="date" min={toDateKey(new Date())} value={checkIn} onChange={(event) => { const value = event.target.value; if (!value) return; setCheckIn(value); if (checkOut <= value) setCheckOut(toDateKey(addDays(new Date(`${value}T00:00:00`), 1))); }} className="mt-1 block w-full rounded-lg border p-2" /></label>
+                <label className="text-sm">Check-out<input type="date" min={toDateKey(addDays(new Date(`${checkIn}T00:00:00`), 1))} value={checkOut} onChange={(event) => { if (event.target.value) setCheckOut(event.target.value); }} className="mt-1 block w-full rounded-lg border p-2" /></label>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">Availability is for your selected dates. Booked or reserved rooms cannot be selected.</p>
+            </div>
+
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              {rooms.length > 0 ? rooms.map((roomItem) => {
+                const selected = selectedRoomNames.includes(roomItem.name);
+                const blocked = unavailable.has(roomItem.name);
+
+                return (
+                  <article
+                    key={roomItem.name}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={selected}
+                    aria-disabled={blocked}
+                    onClick={() => toggleRoom(roomItem.name)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        toggleRoom(roomItem.name);
+                      }
+                    }}
+                    className={`overflow-hidden rounded-xl border bg-white shadow-card transition ${blocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'} ${selected ? 'border-[#0f4da0] ring-2 ring-[#dbeafe]' : 'border-slate-200 hover:border-slate-300'}`}
+                  >
+                    <img src={roomItem.image} alt={roomItem.name} className="h-40 w-full object-cover" />
+                    <div className="p-4">
+                      <h3 className="text-sm font-semibold text-[#202321]">{roomItem.name}</h3>
+                      <p className={`mt-2 text-xs font-bold ${blocked ? 'text-red-700' : 'text-[#0f4da0]'}`} role="status">{blocked ? 'Not available — already booked or reserved for these dates' : selected ? 'Selected' : 'Available — click to select'}</p>
+                      <p className="mt-1 text-xs text-slate-500">{formatRoomCapacityLabel(roomItem.name, roomItem.capacity)}</p>
+                      <p className="mt-2 text-base font-bold text-[#202321]">{formatCurrency(roomItem.price)}/night</p>
+                      <div className="mt-3 space-y-1 text-[11px] text-slate-600">
+                        {roomItem.inclusions.map((inclusion) => (
+                          <div key={inclusion} className="flex items-center gap-2">
+                            <Check className="h-3.5 w-3.5 shrink-0 text-[#0f4da0]" />
+                            <span>{inclusion}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </article>
+                );
+              }) : (
+                <p className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">No rooms available.</p>
+              )}
+            </div>
+          </div>
+
+          <aside className="sticky top-24 h-fit rounded-xl border border-[#e9dfcc] bg-white p-4 shadow-lg shadow-slate-200/60">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-[#0f4da0]">Booking Summary</p>
+                <h2 className="mt-1 text-base font-semibold text-[#202321]">Your room estimate</h2>
+              </div>
+              <span className="rounded-full bg-[#edf4ff] px-3 py-1 text-[10px] font-semibold text-[#0f4da0]">Live</span>
+            </div>
+
+            <div className="mt-4 rounded-xl border border-[#ece2d0] bg-[#fcfbf8] p-3">
+              <div className="border-b border-[#ece2d0] pb-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Selected rooms</p>
+                {selectedRooms.length > 0 ? (
+                  <ul className="mt-2 divide-y divide-[#ece2d0]">
+                    {selectedRooms.map((item) => (
+                      <li key={item.name} className="flex items-start justify-between gap-3 py-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[#202321]">{item.name}</p>
+                          <p className="mt-1 text-xs text-slate-500">{formatRoomCapacityLabel(item.name, item.capacity)}</p>
+                        </div>
+                        <span className="shrink-0 whitespace-nowrap text-xs font-semibold text-[#202321]">{formatCurrency(item.price)}/night</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p className="mt-2 text-sm text-slate-500">Select at least one room</p>}
+              </div>
+
+              <dl className="mt-3 space-y-2 text-xs text-slate-600">
+                <div className="flex items-center justify-between gap-3">
+                  <dt>Selected rooms</dt>
+                  <dd className="font-medium text-[#202321]">{selectedRooms.length}</dd>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <dt>Stay</dt>
+                  <dd className="font-medium text-[#202321]">{nights} {nights === 1 ? 'night' : 'nights'}</dd>
+                </div>
+              </dl>
+            </div>
+
+            <div className="mt-4 rounded-xl bg-[#f7f7f7] p-3">
+              <div className="flex items-center justify-between text-xs text-slate-600">
+                <span>Nightly rate</span>
+                <span className="font-medium text-[#202321]">{formatCurrency(nightlyTotal)}/night</span>
+              </div>
+
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold text-[#202321]">Estimated total</span>
+                  <span className="text-lg font-bold text-[#0f4da0]">{formatCurrency(nightlyTotal * nights)}</span>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs leading-5 text-slate-500">
+              Your selected rooms and dates carry over to <strong>Book Now</strong>. Availability is checked again before submission.
+            </p>
+
+            <div className="mt-4">
+              <Button
+                className="w-full"
+                disabled={!canBookRooms}
+                onClick={() => {
+                  const params = new URLSearchParams();
+                  if (!venue || !room || !canBookRooms) {
+                    return;
+                  }
+                  params.set('venueId', venue.id);
+                  params.set('source', 'rooms');
+                  selectedRooms.forEach((item) => params.append('room', item.name));
+                  params.set('checkIn', checkIn);
+                  params.set('checkOut', checkOut);
+                  params.set('entrySource', 'rooms');
+                  params.set('bookingMode', 'room');
+                  params.set('packageName', room.name);
+                  params.set('packagePrice', String(nightlyTotal));
+                  params.set('estimatedTotal', String(nightlyTotal * nights));
+                  navigate(`/booking?${params.toString()}`);
+                }}
+              >
+                Book Now
+              </Button>
+            </div>
+          </aside>
+        </div>
+      ) : null}
     </section>
   );
 }
-

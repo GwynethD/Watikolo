@@ -10,16 +10,13 @@ export const publicNavItems: NavItem[] = [
   { label: 'CONTACT', path: '/contact' },
 ];
 
-export const customerSidebarItems: NavItem[] = [
-  { label: 'Overview', path: '/dashboard' },
-  { label: 'My Bookings', path: '/dashboard/bookings' },
-  { label: 'Profile', path: '/dashboard/profile' },
-];
-
 export const adminSidebarItems: NavItem[] = [
   { label: 'Overview', path: '/admin' },
   { label: 'Venues', path: '/admin/venues' },
   { label: 'Bookings', path: '/admin/bookings' },
+  { label: 'Inventory', path: '/admin/inventory' },
+  { label: 'Inventory Reports', path: '/admin/inventory-reports' },
+  { label: 'Reviews', path: '/admin/reviews' },
   { label: 'Schedule', path: '/admin/schedule' },
   { label: 'Reports', path: '/admin/reports' },
 ];

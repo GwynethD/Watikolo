@@ -13,10 +13,15 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    -webkit-overflow-scrolling: hidden;
   }
 
   html {
     scroll-behavior: smooth;
+    max-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
   }
 
   *,
@@ -40,10 +45,18 @@
     @apply bg-surface font-sans text-ink;
     margin: 0;
     min-height: 100vh;
+    max-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
+    overscroll-behavior-x: none;
+    touch-action: pan-y;
   }
 
   #root {
     min-height: 100vh;
+    max-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
   }
 
   a {
@@ -52,6 +65,19 @@
 }
 
 @layer components {
+  .app-shell {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
+    overscroll-behavior-x: none;
+  }
+
+  @supports not (overflow: clip) {
+    .app-shell {
+      overflow-x: hidden;
+    }
+  }
+
   .container-shell {
     @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
   }
@@ -67,6 +93,20 @@
   .interactive-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-brand-300 focus:ring-offset-2;
   }
+
+  .admin-content {
+    scrollbar-gutter: stable;
+  }
+
+  .admin-content input,
+  .admin-content select,
+  .admin-content textarea {
+    min-width: 0;
+  }
+
+  .admin-content .overflow-x-auto {
+    overscroll-behavior-x: contain;
+  }
 }
 
 @layer utilities {
@@ -74,3 +114,216 @@
     font-family: 'Open Sans', sans-serif;
   }
 }
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 5mm;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-height: auto !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .admin-sidebar,
+  .admin-report-toolbar,
+  .admin-screen-only {
+    display: none !important;
+  }
+
+  .admin-layout,
+  .admin-container,
+  .admin-grid,
+  .admin-content {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  .admin-print-report {
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .admin-print-report > div,
+  .admin-print-report section,
+  .admin-print-report .overflow-hidden {
+    overflow: visible !important;
+  }
+
+  .admin-report-letterhead {
+    padding-bottom: 8px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .admin-report-letterhead img,
+  .inventory-report-letterhead img {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .admin-report-letterhead > div,
+  .admin-report-letterhead .grid {
+    gap: 8px !important;
+  }
+
+  .admin-report-signatures {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 32px !important;
+    padding-bottom: 64px !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: auto !important;
+    page-break-before: auto !important;
+    margin-top: 18px !important;
+  }
+
+  .admin-report-signatures > div {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .admin-report-signatures > div > div {
+    height: 28px !important;
+    border-bottom: 1px solid #94a3b8 !important;
+  }
+
+  .admin-report-signatures p {
+    margin-top: 4px !important;
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  .admin-report-signatures .admin-signature-name {
+    margin-top: 42px !important;
+  }
+
+  .admin-print-stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    margin-top: 12px !important;
+  }
+
+  .admin-print-stats > div {
+    padding: 8px !important;
+    border: 1px solid #e5e7eb !important;
+    background: #f8fafc !important;
+  }
+
+  .admin-print-table-wrap {
+    overflow: visible !important;
+  }
+
+  .admin-print-table tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .admin-print-table {
+    min-width: 0 !important;
+    width: 100% !important;
+    font-size: 8.5px !important;
+    line-height: 1.25 !important;
+  }
+
+  .admin-print-table th,
+  .admin-print-table td {
+    padding: 5px 6px !important;
+  }
+
+  .admin-print-table span {
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .inventory-page > :not(.inventory-print-report) {
+    display: none !important;
+  }
+
+  .inventory-print-report {
+    display: block !important;
+    width: 100% !important;
+    color: #111111 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
+  .inventory-print-report > div {
+    box-shadow: none !important;
+    break-inside: avoid;
+  }
+
+  .inventory-formal-report {
+    font-family: 'Open Sans', sans-serif !important;
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  .inventory-report-letterhead {
+    font-family: 'Open Sans', sans-serif !important;
+    padding-bottom: 6px !important;
+  }
+
+  .inventory-table-wrap {
+    margin-top: 0 !important;
+    overflow: visible !important;
+  }
+
+  .inventory-print-report table {
+    min-width: 0 !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 7.6px !important;
+    line-height: 1.12 !important;
+  }
+
+  .inventory-print-report th,
+  .inventory-print-report td {
+    border: 0 !important;
+    padding: 2.5px 4px !important;
+  }
+
+  .inventory-print-report th {
+    background: #f8fafc !important;
+    color: #64748b !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+  }
+
+  .inventory-print-report tbody tr:nth-child(even) {
+    background: transparent !important;
+  }
+
+  .inventory-print-report .admin-report-signatures {
+    margin-top: 18px !important;
+  }
+}
+
+.app-shell .overflow-x-auto {
+  overscroll-behavior-x: contain;
+}
+

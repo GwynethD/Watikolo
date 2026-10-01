@@ -6,15 +6,7 @@ import { cn } from '@/utils/cn';
 type ActiveField = 'checkIn' | 'checkOut';
 
 const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-const unavailableDateKeys = new Set([
-  '2026-04-05',
-  '2026-04-10',
-  '2026-04-18',
-  '2026-04-26',
-  '2026-05-01',
-  '2026-05-09',
-  '2026-05-16',
-]);
+const UNAVAILABLE_DAY_OFFSETS = [4, 9, 15, 22];
 
 const monthHeadingFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'long',
@@ -37,6 +29,15 @@ function addDays(date: Date, amount: number) {
   const nextDate = new Date(date);
   nextDate.setDate(nextDate.getDate() + amount);
   return nextDate;
+}
+
+function startOfToday() {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
 function toDateKey(date: Date) {
@@ -76,10 +77,15 @@ function getMonthCells(monthDate: Date) {
   return cells;
 }
 
-function findNextAvailableDate(startDate: Date) {
-  let nextDate = new Date(startDate);
+function getUnavailableDateKeys(anchorDate: Date) {
+  return new Set(UNAVAILABLE_DAY_OFFSETS.map((offset) => toDateKey(addDays(anchorDate, offset))));
+}
 
-  while (unavailableDateKeys.has(toDateKey(nextDate))) {
+function findNextAvailableDate(startDate: Date, unavailableDateKeys: Set<string>) {
+  let nextDate = new Date(startDate);
+  const todayKey = toDateKey(startOfToday());
+
+  while (toDateKey(nextDate) < todayKey || unavailableDateKeys.has(toDateKey(nextDate))) {
     nextDate = addDays(nextDate, 1);
   }
 
@@ -87,11 +93,15 @@ function findNextAvailableDate(startDate: Date) {
 }
 
 export function HeroDateRangePicker() {
-  const [checkIn, setCheckIn] = useState(new Date(2026, 3, 1));
-  const [checkOut, setCheckOut] = useState(new Date(2026, 3, 2));
+  const today = useMemo(() => startOfToday(), []);
+  const todayKey = useMemo(() => toDateKey(today), [today]);
+  const unavailableDateKeys = useMemo(() => getUnavailableDateKeys(today), [today]);
+  const currentMonthStart = useMemo(() => startOfMonth(today), [today]);
+  const [checkIn, setCheckIn] = useState(() => findNextAvailableDate(today, unavailableDateKeys));
+  const [checkOut, setCheckOut] = useState(() => findNextAvailableDate(addDays(today, 1), unavailableDateKeys));
   const [activeField, setActiveField] = useState<ActiveField>('checkIn');
   const [isOpen, setIsOpen] = useState(false);
-  const [visibleMonth, setVisibleMonth] = useState(new Date(2026, 3, 1));
+  const [visibleMonth, setVisibleMonth] = useState(currentMonthStart);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -106,9 +116,12 @@ export function HeroDateRangePicker() {
   }, []);
 
   const visibleMonths = useMemo(() => [visibleMonth, addMonths(visibleMonth, 1)], [visibleMonth]);
+  const canGoPrevMonth = visibleMonth > currentMonthStart;
 
   const handleDateSelect = (selectedDate: Date) => {
-    if (unavailableDateKeys.has(toDateKey(selectedDate))) {
+    const selectedDateKey = toDateKey(selectedDate);
+
+    if (selectedDateKey < todayKey || unavailableDateKeys.has(selectedDateKey)) {
       return;
     }
 
@@ -116,7 +129,7 @@ export function HeroDateRangePicker() {
       setCheckIn(selectedDate);
 
       if (selectedDate >= checkOut) {
-        setCheckOut(findNextAvailableDate(addDays(selectedDate, 1)));
+        setCheckOut(findNextAvailableDate(addDays(selectedDate, 1), unavailableDateKeys));
       }
 
       setActiveField('checkOut');
@@ -125,7 +138,7 @@ export function HeroDateRangePicker() {
 
     if (selectedDate <= checkIn) {
       setCheckIn(selectedDate);
-      setCheckOut(findNextAvailableDate(addDays(selectedDate, 1)));
+      setCheckOut(findNextAvailableDate(addDays(selectedDate, 1), unavailableDateKeys));
       return;
     }
 
@@ -145,7 +158,11 @@ export function HeroDateRangePicker() {
                     <button
                       type="button"
                       onClick={() => setVisibleMonth((currentMonth) => addMonths(currentMonth, -1))}
-                      className="rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                      disabled={!canGoPrevMonth}
+                      className={cn(
+                        'rounded-full p-1 transition',
+                        canGoPrevMonth ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-700' : 'cursor-not-allowed text-slate-200',
+                      )}
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </button>
@@ -180,22 +197,26 @@ export function HeroDateRangePicker() {
                       return <span key={`blank-${index}`} className="h-7" />;
                     }
 
-                    const isUnavailable = unavailableDateKeys.has(toDateKey(dateCell));
+                    const dateKey = toDateKey(dateCell);
+                    const isPast = dateKey < todayKey;
+                    const isUnavailable = unavailableDateKeys.has(dateKey);
                     const isSelected = isSameDay(dateCell, checkIn) || isSameDay(dateCell, checkOut);
                     const isInRange = dateCell > checkIn && dateCell < checkOut;
+                    const isDisabled = isPast || isUnavailable;
 
                     return (
                       <button
-                        key={toDateKey(dateCell)}
+                        key={dateKey}
                         type="button"
                         onClick={() => handleDateSelect(dateCell)}
-                        disabled={isUnavailable}
+                        disabled={isDisabled}
                         className={cn(
                           'mx-auto flex h-7 w-7 items-center justify-center rounded-sm text-[12px] transition',
                           isUnavailable && 'cursor-not-allowed bg-rose-100 text-rose-300',
+                          isPast && 'cursor-not-allowed bg-slate-50 text-slate-300',
                           isSelected && 'bg-sky-100 font-semibold text-sky-700',
                           isInRange && !isSelected && 'bg-sky-50 text-sky-700',
-                          !isUnavailable && !isSelected && !isInRange && 'text-[#526988] hover:bg-slate-100',
+                          !isDisabled && !isSelected && !isInRange && 'text-[#526988] hover:bg-slate-100',
                         )}
                       >
                         {dateCell.getDate()}

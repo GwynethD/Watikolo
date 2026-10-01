@@ -1,56 +1,112 @@
-import { ShieldCheck } from 'lucide-react';
-import { FormEvent, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/Button';
-import { InputField } from '@/components/ui/FormField';
+import { FormEvent, useEffect, useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAdminAuth } from '@/context/AdminAuthContext';
 
 export function AdminLoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated, login } = useAdminAuth();
+  const backgroundImage = new URL('../../pictures/villa.png', import.meta.url).href;
   const [email, setEmail] = useState('admin@watikolo.com');
   const [password, setPassword] = useState('admin123');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const requestedRedirect = searchParams.get('redirect');
+  const redirectTo = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('/admin/login')
+    ? requestedRedirect
+    : '/admin';
+
+  useEffect(() => {
+    setError('');
+  }, [email, password]);
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    navigate('/admin');
+
+    setIsSubmitting(true);
+    try {
+      if (!(await login(email, password))) {
+        setError('Invalid admin email or password.');
+        return;
+      }
+
+      navigate(redirectTo, { replace: true });
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Unable to sign in.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  if (isAuthenticated) {
+    return <Navigate to={redirectTo} replace />;
+  }
+
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#f8f3e8_0%,#fbfaf7_38%,#f4efe4_100%)] px-4 py-10">
-      <div className="mx-auto max-w-5xl overflow-hidden rounded-[2rem] bg-white shadow-soft lg:grid lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="relative min-h-[320px] overflow-hidden bg-[#2d2b2a] p-8 text-white sm:p-10">
-          <img
-            src="https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=1400&q=80"
-            alt="Watikolo admin login"
-            className="absolute inset-0 h-full w-full object-cover opacity-35"
-          />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(32,35,33,0.45)_0%,rgba(32,35,33,0.76)_100%)]" />
-          <div className="relative z-10 max-w-md">
-            <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[#e7d8aa]">Admin Login</p>
-            <h1 className="mt-4 font-display text-5xl font-semibold leading-none">Control the resort booking system from one secure panel.</h1>
-            <p className="mt-5 text-sm leading-7 text-slate-200">
-              Use this admin entrance for venue management, booking approvals, schedules, and reports.
-            </p>
-          </div>
-        </div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#09131e] px-4 py-10">
+      <img src={backgroundImage} alt="Watikolo admin login" className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-black/45" />
 
-        <div className="p-8 sm:p-10">
-          <div className="mx-auto max-w-md">
-            <div className="inline-flex rounded-full bg-[#eef7fb] p-3 text-[#5fa7c9]">
-              <ShieldCheck className="h-6 w-6" />
+      <form
+        onSubmit={handleSubmit}
+        className="relative z-10 w-full max-w-[420px] rounded-xl border border-white/10 bg-[#1d2730]/70 px-8 py-8 text-white shadow-soft backdrop-blur-md"
+      >
+        <h1 className="text-3xl font-semibold">Admin Login</h1>
+        <p className="mt-2 text-sm text-white/70">Sign in to manage bookings and events</p>
+
+        <div className="mt-7 space-y-4">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-white/65">Email</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="h-12 w-full rounded-lg border border-white/10 bg-white px-4 text-sm text-[#1f2933] outline-none focus:ring-2 focus:ring-[#0f4da0]"
+              aria-label="Admin email"
+              autoComplete="username"
+              required
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-[0.18em] text-white/65">Password</span>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                className="h-12 w-full rounded-lg border border-white/10 bg-white px-4 pr-12 text-sm text-[#1f2933] outline-none focus:ring-2 focus:ring-[#0f4da0]"
+                aria-label="Password"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-800"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-            <h2 className="mt-5 text-3xl font-semibold text-ink">Welcome back</h2>
-            <p className="mt-3 text-sm leading-7 text-slate-500">
-              Demo login only. Submitting this form will send you to the admin dashboard at <code>/admin</code>.
-            </p>
-
-            <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
-              <InputField label="Admin email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} />
-              <InputField label="Password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
-              <Button className="w-full" type="submit">Sign in to admin</Button>
-            </form>
-          </div>
+          </label>
         </div>
-      </div>
+
+        {error ? (
+          <p className="mt-4 rounded-lg border border-red-200/40 bg-red-500/20 px-4 py-3 text-sm text-red-50" role="alert">
+            {error}
+          </p>
+        ) : null}
+
+        <button type="submit" disabled={isSubmitting} className="mt-5 h-12 w-full rounded-lg bg-[#0f67c8] text-sm font-semibold text-white transition hover:bg-[#0b56ab] disabled:cursor-not-allowed disabled:opacity-70">
+          {isSubmitting ? 'Signing in...' : 'Login'}
+        </button>
+
+        <p className="mt-6 text-center text-xs text-white/35">© 2026 Watikolo</p>
+      </form>
     </div>
   );
 }

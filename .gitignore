@@ -1,0 +1,10 @@
+.env
+node_modules/
+dist/
+.tmp/
+*.tsbuildinfo
+*.log
+*.zip
+server/data/admin-users.json
+server/data/admin-sessions.json
+src/pictures/WE5D3A1775108771_BookingVoucher_Marc Ge.pdf

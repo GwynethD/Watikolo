@@ -5,6 +5,8 @@ import { Navbar } from '@/components/layout/Navbar';
 
 export function PublicLayout() {
   const location = useLocation();
+  const isBookingFlow = location.pathname === '/booking' || location.pathname === '/booking/success';
+  const logoImage = new URL('../pictures/watikolo-logo.png', import.meta.url).href;
 
   useEffect(() => {
     if (!location.hash) {
@@ -24,12 +26,20 @@ export function PublicLayout() {
   }, [location.hash, location.pathname]);
 
   return (
-    <div className="min-h-screen bg-surface">
-      <Navbar />
+    <div className="public-layout app-shell min-h-screen bg-surface">
+      {isBookingFlow ? (
+        <header className="border-b border-slate-200 bg-white">
+          <div className="mx-auto flex w-full max-w-[1120px] items-center px-4 py-3">
+            <img src={logoImage} alt="Watikolo logo" className="h-10 w-auto object-contain sm:h-12" />
+          </div>
+        </header>
+      ) : (
+        <Navbar />
+      )}
       <main>
         <Outlet />
       </main>
-      <Footer />
+      {isBookingFlow ? null : <Footer />}
     </div>
   );
 }

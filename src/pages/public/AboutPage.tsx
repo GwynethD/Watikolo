@@ -1,10 +1,9 @@
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { aboutPageService } from '@/services/aboutPageService';
+import type { AboutPageContent } from '@/types';
 
 export function AboutPage() {
-  const heroImage = new URL('../../pictures/villa.png', import.meta.url).href;
-  const featureImage = new URL('../../pictures/w-pool.png', import.meta.url).href;
-  const mainImage = new URL('../../pictures/outside.png', import.meta.url).href;
   const natureImage = new URL('../../pictures/nature.jpg', import.meta.url).href;
   const natureAltImage = new URL('../../pictures/nature1.jpg', import.meta.url).href;
   const outsideOneImage = new URL('../../pictures/outside1.png', import.meta.url).href;
@@ -17,15 +16,37 @@ export function AboutPage() {
   const homeImage = new URL('../../pictures/watikolo-home.png', import.meta.url).href;
 
   const whyRef = useRef<HTMLDivElement | null>(null);
+  const [content, setContent] = useState<AboutPageContent | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    aboutPageService.getContent().then((pageContent) => {
+      if (isMounted) {
+        setContent(pageContent);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const scrollToWhy = () => {
     whyRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const getSection = (id: string) => content?.sections.find((section) => section.id === id);
+  const sanctuarySection = getSection('sanctuary');
+  const peacefulSection = getSection('peaceful-private');
+  const celebrationSection = getSection('celebration-space');
+  const designedSection = getSection('designed-spaces');
+  const serviceSection = getSection('service');
+
   return (
     <div className="bg-white font-body">
       <section>
-        <img src={heroImage} alt="Watikolo villa exterior" className="h-[450px] w-full object-cover" />
+        <img src={content?.heroImage ?? new URL('../../pictures/villa.png', import.meta.url).href} alt="Watikolo villa exterior" className="h-[450px] w-full object-cover" />
       </section>
 
       <section className="py-6">
@@ -52,66 +73,54 @@ export function AboutPage() {
         </div>
       </section>
 
-      <section className="py-4">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="overflow-hidden rounded-2xl border shadow-card">
-            <img src={featureImage} alt="Watikolo poolside experience" className="h-[1000px] w-full object-cover" />
-          </div>
-        </div>
-      </section>
-
       <section ref={whyRef} className="py-10">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="font-display text-2xl font-semibold text-[#1f1f1f]">
-            Welcome to Your Sanctuary: Why Choose Watikolo for Your Next Stay?
+            {sanctuarySection?.title ?? 'About Watikolo'}
           </h2>
 
           <div className="mt-3 space-y-3 leading-relaxed text-gray-600">
-            <p>
-              Watikolo is a uniquely coined name, created to sound warm, tropical, and unforgettable. Though it has no
-              official dictionary meaning, its rhythm gently echoes the calm of flowing water and the serenity of an island
-              breeze. Because it is an invented name, Watikolo holds the freedom to define its own story - a story of
-              comfort, connection, and meaningful escapes.
-            </p>
-
-            <p>
-              It represents a sanctuary where moments slow down and life feels lighter - a place where laughter fills open
-              spaces, celebrations become timeless memories, and quiet mornings bring a sense of renewal. At Watikolo,
-              every stay is designed to feel personal and sincere, blending privacy, nature, and thoughtful hospitality into
-              one harmonious experience.
-            </p>
-
-            <p>
-              More than just a destination, it is a feeling - one that welcomes you, embraces you, and invites you to
-              return again and again. We warmly invite you to experience Watikolo - to celebrate, unwind, and simply feel
-              at home. Your unforgettable stay awaits.
-            </p>
+            {sanctuarySection?.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
           </div>
         </div>
       </section>
 
       <section className="pb-16">
         <div className="mx-auto max-w-6xl px-6">
-          <div className="overflow-hidden rounded-2xl shadow-card">
-            <img src={mainImage} alt="Watikolo outdoor venue view" className="h-[1000px] w-full object-cover" />
+          <div className="mb-10 rounded-[18px] bg-[#f7f9fb] px-6 py-8 shadow-[0_18px_45px_rgba(15,35,55,0.08)] sm:px-8 lg:px-10">
+            <h2 className="text-center font-display text-2xl font-semibold text-[#1f1f1f]">Booking &amp; Walk-In Policy</h2>
+
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
+              <div>
+                <h3 className="text-base font-semibold text-[#254b63]">Booking Policy</h3>
+                <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-6 text-slate-600">
+                  {content?.bookingPolicy.map((policy) => <li key={policy}>{policy}</li>)}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="text-base font-semibold text-[#254b63]">Walk-In Guests</h3>
+                <ul className="mt-4 list-disc space-y-3 pl-5 text-sm leading-6 text-slate-600">
+                  {content?.walkInPolicy.map((policy) => <li key={policy}>{policy}</li>)}
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-8 flex justify-center">
+              <Link
+                to="/booking"
+                className="rounded-full bg-[#0d559d] px-7 py-3 text-sm font-semibold text-white shadow-card transition hover:bg-[#0a4580]"
+              >
+                Reserve Your Date Now
+              </Link>
+            </div>
           </div>
 
-          <div className="mt-6">
-            <h2 className="font-display text-xl font-semibold text-[#1f1f1f]">Peaceful & Private</h2>
+          <div>
+            <h2 className="font-display text-xl font-semibold text-[#1f1f1f]">{peacefulSection?.title}</h2>
 
             <div className="mt-3 space-y-3 leading-relaxed text-gray-600">
-              <p>
-                Thoughtfully set away from the busy crowds and city noise, Watikolo offers an exclusive space where your
-                celebrations can unfold in comfort and privacy. Surrounded by open skies, tropical greenery, and a serene
-                atmosphere, our venue creates the perfect backdrop for intimate gatherings and unforgettable occasions.
-              </p>
-
-              <p>
-                We take pride in creating an environment where you can feel completely at ease. Our attentive staff is
-                always on hand to ensure your needs are met while respecting your privacy. Whether you're here for a
-                romantic escape, a family vacation, or a solo retreat, Watikolo offers the perfect blend of comfort and
-                seclusion for an unforgettable stay.
-              </p>
+              {peacefulSection?.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
             </div>
           </div>
 
@@ -123,14 +132,10 @@ export function AboutPage() {
           </div>
 
           <div className="mt-10">
-            <h2 className="font-display text-xl font-semibold text-[#1f1f1f]">Your Exclusive Celebration Space</h2>
+            <h2 className="font-display text-xl font-semibold text-[#1f1f1f]">{celebrationSection?.title}</h2>
 
             <div className="mt-3 space-y-3 leading-relaxed text-gray-600">
-              <p>
-                Watikolo offers beautifully curated spaces where guests can gather, celebrate, and relax. Each area
-                provides private dining, comfortable lounges, and modern amenities, creating the perfect setting for
-                memorable occasions.
-              </p>
+              {celebrationSection?.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
             </div>
           </div>
 
@@ -157,45 +162,24 @@ export function AboutPage() {
             </div>
 
             <div className="mt-6">
-              <h2 className="font-display text-xl font-semibold text-[#1f1f1f]">Thoughtfully Designed Spaces</h2>
+              <h2 className="font-display text-xl font-semibold text-[#1f1f1f]">{designedSection?.title}</h2>
 
               <div className="mt-3 space-y-3 leading-relaxed text-gray-600">
-                <p>
-                  Watikolo is more than just a venue - it is a place where moments become lasting memories. From intimate
-                  gatherings to grand celebrations, every corner is thoughtfully designed to bring people together in a
-                  beautiful and relaxing setting.
-                </p>
-
-                <p>
-                  Whether you're celebrating milestones or simply enjoying time with loved ones, Watikolo provides a space
-                  where every experience feels special, meaningful, and unforgettable.
-                </p>
+                {designedSection?.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
               </div>
             </div>
           </section>
 
           <section className="mt-10">
             <div className="overflow-hidden rounded-2xl border shadow-card">
-              <img src={'.'} alt="Watikolo poolside highlight" className="h-[1000px] w-full object-cover" />
+              <img src={homeImage} alt="Watikolo poolside highlight" className="h-[1000px] w-full object-cover" />
             </div>
-          </section>
 
-          <section className="mt-10">
             <div className="mt-6">
-              <h2 className="font-display text-xl font-semibold text-[#1f1f1f]">Hospitable & Attentive Service</h2>
+              <h2 className="font-display text-xl font-semibold text-[#1f1f1f]">{serviceSection?.title}</h2>
 
               <div className="mt-3 space-y-3 leading-relaxed text-gray-600">
-                <p>
-                  At Watikolo, our team takes pride in creating a welcoming and seamless experience for every event. Our
-                  attentive staff are always ready to assist, ensuring that every detail is carefully prepared so you can
-                  focus on celebrating and enjoying your special occasion.
-                </p>
-
-                <p>
-                  From personalized event planning to on-site support, we are dedicated to making your experience at
-                  Watikolo truly unforgettable. Whether you're hosting an intimate gathering or a grand celebration, our
-                  hospitable service is designed to make you and your guests feel cared for and valued throughout your stay.
-                </p>
+                {serviceSection?.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
               </div>
             </div>
           </section>
